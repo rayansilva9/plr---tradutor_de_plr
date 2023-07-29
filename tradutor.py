@@ -20,6 +20,8 @@ plr_doc = []
 
 local_de_salvamento = ''
 
+traduzir_para = ['pt', 'fr', 'en']
+
 
 def selectDir():
     global local_de_salvamento
@@ -33,6 +35,9 @@ plrList.place(x=170, y=300,)
 
 
 def obterArquivos():
+    arquivos.clear()
+    plr_txt.clear()
+    plr_doc.clear()
     for i in filedialog.askopenfilenames():
         arquivos.append(i)
 
@@ -55,48 +60,62 @@ def dividir_texto(string, tamanho):
 
 def traduzir_txt3():
     for prl in plr_txt:
-        texto_completo1 = []
-        texto_completo2 = ''
-        nome_trad = tradutor.translate(prl["nome"].replace(
-            "_", " "), src='en', dest='pt',).text
+        for lang in traduzir_para:
+            if os.path.exists(f"{local_de_salvamento}/{lang}"):
+                pass
+            else:
+                os.makedirs(f"{local_de_salvamento}/{lang}")
+            texto_completo1 = []
+            texto_completo2 = ''
 
-        with open(prl['path'], "r", encoding='windows-1252') as arquivo:
-            partes = dividir_texto(arquivo.read(), 4999)
-            for parte in partes:
-                texto_completo1.append(tradutor.translate(
-                    parte, src='en', dest='pt',).text)
-            texto_completo2 = '\n'.join(texto_completo1)
-            arquivo.close()
+            nome_trad = tradutor.translate(prl["nome"].replace(
+                "_", " "), src='auto', dest=lang,).text
 
-        with open(local_de_salvamento + "/" + nome_trad + '.txt', 'w', encoding='utf-8') as arquivo:
-            arquivo.write(texto_completo2)
-            arquivo.close()
+            with open(prl['path'], "r", encoding='windows-1252') as arquivo:
+                partes = dividir_texto(arquivo.read(), 4999)
+                for parte in partes:
+                    texto_completo1.append(tradutor.translate(
+                        parte, src='auto', dest=lang,).text)
+                texto_completo2 = '\n'.join(texto_completo1)
+                arquivo.close()
+
+            with open(local_de_salvamento + '/' + lang + "/" + nome_trad + '.txt', 'w', encoding='utf-8') as arquivo:
+                arquivo.write(texto_completo2)
+                arquivo.close()
 
 
 def traduzir_doc3():
 
     for prl in plr_doc:
-        texto1 = []
-        texto2 = ''
-        texto_completo1 = []
-        texto_completo2 = ''
-        documentTraduzido = Document()
-        doc = aw.Document(prl['path'])
-        nome_trad = tradutor.translate(prl["nome"], src='en', dest='pt',).text
-        doc.save(f"{local_de_salvamento}/{nome_trad + '.docx'}")
-        documentDocx = Document(f"{local_de_salvamento}/{nome_trad + '.docx'}")
-        for paragraph in documentDocx.paragraphs[1:]:
-            texto1.append(paragraph.text)
+        for lang in traduzir_para:
+            if os.path.exists(f"{local_de_salvamento}/{lang}"):
+                pass
+            else:
+                os.makedirs(f"{local_de_salvamento}/{lang}")
+            texto1 = []
+            texto2 = ''
+            texto_completo1 = []
+            texto_completo2 = ''
+            documentTraduzido = Document()
+            doc = aw.Document(prl['path'])
+            nome_trad = tradutor.translate(
+                prl["nome"], src='auto', dest=lang,).text
+            doc.save(f"{local_de_salvamento}/{lang}/{nome_trad + '.docx'}")
+            documentDocx = Document(
+                f"{local_de_salvamento}/{lang}/{nome_trad + '.docx'}")
+            for paragraph in documentDocx.paragraphs[1:]:
+                texto1.append(paragraph.text)
 
-        texto2 = '\n'.join(texto1)
-        partes = dividir_texto(texto2, 4999)
+            texto2 = '\n'.join(texto1)
+            partes = dividir_texto(texto2, 4999)
 
-        for parte in partes:
-            texto_completo1.append(tradutor.translate(
-                parte, src='en', dest='pt',).text)
-        texto_completo2 = '\n'.join(texto_completo1)
-        documentTraduzido.add_paragraph(texto_completo2)
-        documentTraduzido.save(local_de_salvamento + "/" + nome_trad + '.docx')
+            for parte in partes:
+                texto_completo1.append(tradutor.translate(
+                    parte, src='auto', dest=lang,).text)
+            texto_completo2 = '\n'.join(texto_completo1)
+            documentTraduzido.add_paragraph(texto_completo2)
+            documentTraduzido.save(
+                local_de_salvamento + '/' + lang + "/" + nome_trad + '.docx')
 
 
 def action():
