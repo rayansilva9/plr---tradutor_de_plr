@@ -3,9 +3,10 @@ import tkinter
 import customtkinter
 from googletrans import Translator
 from docx import Document
-from termcolor import colored
 from tkinter import filedialog
 import aspose.words as aw
+from tkinter.ttk import Progressbar
+import threading
 
 
 janela = customtkinter.CTk()
@@ -15,12 +16,69 @@ janela.title('Tradutor de PLR')
 tradutor = Translator(service_urls=['translate.google.com'])
 
 arquivos = []
+arquivos_to_remove = arquivos
 plr_txt = []
 plr_doc = []
 
 local_de_salvamento = ''
 
 traduzir_para = ['pt', 'fr', 'en']
+progress = Progressbar(janela, orient="horizontal",
+                       length=100, mode='indeterminate')
+
+
+def bar():
+
+    if len(arquivos_to_remove) > 0:
+        progress.pack(pady=10)
+        while len(arquivos_to_remove) > 0:
+            import time
+            progress['value'] = 20
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 40
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 50
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 60
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 80
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 100
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 80
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 60
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 50
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 40
+            janela.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 20
+            janela.update_idletasks()
+            time.sleep(0.5)
+            progress['value'] = 0
+    else:
+        progress.destroy()
 
 
 def selectDir():
@@ -35,6 +93,7 @@ plrList.place(x=170, y=300,)
 
 
 def obterArquivos():
+    global arquivos_to_remove
     arquivos.clear()
     plr_txt.clear()
     plr_doc.clear()
@@ -52,6 +111,7 @@ def obterArquivos():
         if extensao == '.doc' or extensao == '.docx':
             plr_doc.append(
                 {'nome': os.path.basename(nome), 'path': arquivo, })
+    arquivos_to_remove = arquivos
 
 
 def dividir_texto(string, tamanho):
@@ -59,7 +119,7 @@ def dividir_texto(string, tamanho):
 
 
 def traduzir_txt3():
-    for prl in plr_txt:
+    for plr in plr_txt:
         for lang in traduzir_para:
             if os.path.exists(f"{local_de_salvamento}/{lang}"):
                 pass
@@ -68,10 +128,10 @@ def traduzir_txt3():
             texto_completo1 = []
             texto_completo2 = ''
 
-            nome_trad = tradutor.translate(prl["nome"].replace(
+            nome_trad = tradutor.translate(plr["nome"].replace(
                 "_", " "), src='auto', dest=lang,).text
 
-            with open(prl['path'], "r", encoding='windows-1252') as arquivo:
+            with open(plr['path'], "r", encoding='windows-1252') as arquivo:
                 partes = dividir_texto(arquivo.read(), 4999)
                 for parte in partes:
                     texto_completo1.append(tradutor.translate(
@@ -82,11 +142,13 @@ def traduzir_txt3():
             with open(local_de_salvamento + '/' + lang + "/" + nome_trad + '.txt', 'w', encoding='utf-8') as arquivo:
                 arquivo.write(texto_completo2)
                 arquivo.close()
+        arquivos_to_remove.remove(plr["path"])
+        bar()
 
 
 def traduzir_doc3():
 
-    for prl in plr_doc:
+    for plr in plr_doc:
         for lang in traduzir_para:
             if os.path.exists(f"{local_de_salvamento}/{lang}"):
                 pass
@@ -97,9 +159,9 @@ def traduzir_doc3():
             texto_completo1 = []
             texto_completo2 = ''
             documentTraduzido = Document()
-            doc = aw.Document(prl['path'])
+            doc = aw.Document(plr['path'])
             nome_trad = tradutor.translate(
-                prl["nome"], src='auto', dest=lang,).text
+                plr["nome"], src='auto', dest=lang,).text
             doc.save(f"{local_de_salvamento}/{lang}/{nome_trad + '.docx'}")
             documentDocx = Document(
                 f"{local_de_salvamento}/{lang}/{nome_trad + '.docx'}")
@@ -116,6 +178,8 @@ def traduzir_doc3():
             documentTraduzido.add_paragraph(texto_completo2)
             documentTraduzido.save(
                 local_de_salvamento + '/' + lang + "/" + nome_trad + '.docx')
+        arquivos_to_remove.remove(plr["path"])
+        bar()
 
 
 def action():
@@ -124,8 +188,9 @@ def action():
     if local_de_salvamento == '':
         tkinter.messagebox.showinfo("", "Selecione onde salvar")
     else:
-        traduzir_doc3()
-        traduzir_txt3()
+        threading.Thread(target=traduzir_doc3).start()
+        threading.Thread(target=traduzir_txt3).start()
+        threading.Thread(target=bar).start()
 
 
 texto1 = customtkinter.CTkLabel(janela, text='Rodar codigo',)
